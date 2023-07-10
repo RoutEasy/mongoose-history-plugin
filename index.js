@@ -79,6 +79,15 @@ let historyPlugin = (options = {}) => {
   const connection = pluginOptions.connection || mongoose.connection;
   let Model = connection.model(pluginOptions.modelName, Schema);
 
+  let checkDepthOfObject = (obj) => {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        key,
+        value._t === 'a'  ? [value] : (typeof value === "object" ? checkDepthOfObject(value) : value)
+      ])
+    );
+  }
+
   let getModelName = (defaultName) => {
     return pluginOptions.embeddedDocument ? pluginOptions.embeddedModelName : defaultName;
   };
@@ -352,7 +361,7 @@ let historyPlugin = (options = {}) => {
           semver.lt(item.version, version2get) ||
           item.version === version2get
         ) {
-          version = jdf.patch(version, item.diff);
+          version = jdf.patch(checkDepthOfObject(version), histories[i].diff);
         }
       });
 
